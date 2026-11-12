@@ -20,3 +20,9 @@
 - Mahasiswa: buka `https://USERNAME.github.io/NAMA-REPO/`
 - Admin: `https://USERNAME.github.io/NAMA-REPO/#/admin` (juga ada tautan kecil "Login Panitia" di bawah beranda).
 - Urutan: login admin → Pengaturan (isi info, ukuran, gambar) → menu Mahasiswa (centang peserta, Simpan) → bagikan link.
+
+## D. Upgrade (tabel ukuran & gambar Drive)
+1. Ganti isi Kode.gs dengan versi terbaru, lalu jalankan fungsi `upgradeToga` SEKALI.
+2. Deploy ulang: Kelola deployment → Edit → Versi baru.
+3. Timpa file frontend (index.html, css, js) lalu push ke GitHub.
+4. Gambar: bagikan file Drive sebagai "Siapa saja yang memiliki link", lalu tempel link-nya di Pengaturan.

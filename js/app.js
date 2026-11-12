@@ -8,7 +8,11 @@ const nl = s => esc(s).replace(/\n/g, '<br>');
 const jget = (k, d, st = localStorage) => { try { return JSON.parse(st.getItem(k)) ?? d; } catch { return d; } };
 const jset = (k, v, st = localStorage) => { try { st.setItem(k, JSON.stringify(v)); } catch {} };
 const fmt = ms => ms ? new Date(ms).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', dateStyle: 'long', timeStyle: 'short' }) + ' WIB' : '-';
-const gimg = v => !v ? '' : /^https?:/.test(v) ? v : 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(v) + '&sz=w1000';
+const gid = v => { v = String(v || '').trim(); const m = v.match(/\/d\/([\w-]{20,})/) || v.match(/[?&]id=([\w-]{20,})/) || (/^[\w-]{25,}$/.test(v) ? [0, v] : null); return m ? m[1] : ''; };
+const gimg = v => { const i = gid(v); return i ? 'https://drive.google.com/thumbnail?id=' + i + '&sz=w1600' : /^https?:/.test(String(v || '').trim()) ? v.trim() : ''; };
+const gimg2 = v => { const i = gid(v); return i ? 'https://lh3.googleusercontent.com/d/' + i : ''; };
+const gtag = (v, alt) => { const g = gimg(v); return g ? `<img class="gimg" src="${esc(g)}" data-f="${esc(gimg2(v))}" alt="${alt}" onerror="if(this.dataset.f&&!this.dataset.t){this.dataset.t=1;this.src=this.dataset.f}else{this.outerHTML='<small>Gambar panduan belum bisa dimuat. Pastikan file Drive dibagikan: Siapa saja yang memiliki link.</small>'}">` : ''; };
+const tabelUk = t => t && t.length ? `<div class="tw"><table class="uk"><tr><th>Ukuran</th><th>LD</th><th>PJ</th><th>PJT</th></tr>${t.map(r => `<tr><td><b>${esc(r.l)}</b></td><td>${esc(r.ld)}</td><td>${esc(r.pj)}</td><td>${esc(r.pjt)}</td></tr>`).join('')}</table></div><small>LD = Lingkar Dada · PJ = Panjang Jubah · PJT = Panjang Jubah Tangan (satuan cm)</small>` : '';
 const S = { pub: jget('tc_pub', null), st: null, v: 'home' };
 const A = { token: localStorage.getItem('tc_tk') || '', d: null, ps: new Set(), pend: new Map(), act: Date.now(),
   mf: { q: '', prodi: '', ang: '', kelas: '', st: '', pg: 0 }, df: { tab: 'sudah', q: '', prodi: '', uk: '', pg: 0 } };
@@ -43,14 +47,14 @@ async function loadPub() {
 function renderHome() {
   const p = S.pub, el = $('#v-home');
   if (!p) { el.innerHTML = '<div class="sk"></div><div class="sk"></div><div class="sk"></div>'; return; }
-  const o = isOpen(p), g = gimg(p.gambar);
+  const o = isOpen(p);
   el.innerHTML = `<div class="hero"><span class="pill ${o ? '' : 'no'}">● Portal: ${o ? 'DIBUKA' : 'DITUTUP'}</span>
     <h1>Konfirmasi Ukuran Baju Toga Wisuda ${esc(p.tahun)} 🎓</h1><p>Pastikan ukuran toga & data wisudawan Anda terisi dengan benar.</p>
     ${p.batas ? `<div class="deadline">⏰ Batas akhir: ${fmt(p.batas)}</div>` : ''}</div>
     <div class="card"><b>Sudah siap mengonfirmasi?</b><p><small>Hanya butuh 2 menit dengan NIM Anda.</small></p><button class="btn" data-a="login">Masuk dengan NIM →</button></div>
     ${info('📅', 'Informasi Wisuda', p.wisuda)}${info('👘', 'Gladi & Pengambilan Toga', p.gladi)}${info('💳', 'Pembayaran Wisuda', p.bayar)}
-    <div class="card" id="panduan"><h3>📏 Panduan Ukuran Baju Toga</h3>${g ? `<img class="gimg" src="${esc(g)}" alt="Panduan ukuran toga" loading="lazy">` : ''}
-    <div class="chips">${p.ukuran.map(u => `<div class="chip"><b>${esc(u.l)}</b><small>${esc(u.k)}</small></div>`).join('')}</div></div>
+    <div class="card" id="panduan"><h3>📏 Panduan Ukuran Baju Toga</h3>${gtag(p.gambar, 'Panduan ukuran toga')}
+    ${tabelUk(p.tabel) || `<div class="chips">${p.ukuran.map(u => `<div class="chip"><b>${esc(u.l)}</b><small>${esc(u.k)}</small></div>`).join('')}</div>`}</div>
     ${waBtn(p)}<div class="foot">© Panitia Wisuda · <a href="#/admin">Login Panitia</a></div>`;
 }
 function openLogin() {
@@ -75,12 +79,12 @@ function applySt(r) {
   else if (r.state === 'terkirim') { renderStatus(); go('status'); }
 }
 function renderForm() {
-  const id = S.st.id, p = S.pub || { ukuran: [] }, d = jget('tc_d_' + id.nim, {}), g = gimg(p.gambar);
+  const id = S.st.id, p = S.pub || { ukuran: [] }, d = jget('tc_d_' + id.nim, {});
   $('#v-form').innerHTML = `<div class="card"><span class="pill">✔ Data Terverifikasi Yudisium</span><p><small>NAMA MAHASISWA</small></p><h2>${esc(id.nama)}</h2>
     <div class="g2"><div><small>NIM</small><br><b>${esc(id.nim)}</b></div><div><small>Prodi</small><br><b>${esc(id.prodi)}</b></div></div><small>Angkatan ${esc(id.angkatan)} · Kelas ${esc(id.kelas)}</small></div>
   <form id="f" class="card" autocomplete="off"><h3>1. Pilih Ukuran Baju Toga <i class="req">Wajib</i></h3>
     <div class="sz">${p.ukuran.map(u => `<label class="chip"><input type="radio" name="u" value="${esc(u.l)}" ${d.u === u.l ? 'checked' : ''}><b>${esc(u.l)}</b><small>${esc(u.k)}</small></label>`).join('')}</div>
-    ${g ? `<details><summary>Buka panduan ukuran</summary><img class="gimg" src="${esc(g)}" alt="Panduan ukuran"></details>` : ''}
+    ${p.gambar || (p.tabel || []).length ? `<details><summary>Buka panduan ukuran</summary>${tabelUk(p.tabel)}${gtag(p.gambar, 'Panduan ukuran')}</details>` : ''}
     <h3>2. Data Keluarga & Domisili</h3>
     <label>Nama Lengkap Ayah *<input name="ayah" value="${esc(d.ayah)}"></label><label>Nama Lengkap Ibu *<input name="ibu" value="${esc(d.ibu)}"></label>
     <label>Kota Asal / Domisili *<input name="kota" value="${esc(d.kota)}"></label>
@@ -215,13 +219,14 @@ async function psave() {
   else { A.d.pst = bk[0]; A.ps = new Set(A.d.pst); A.pend = bk[1]; renderMT(); renderDash(); toast(r.message, 1); }
 }
 function renderCfg() {
-  const c = A.d.cfg, z = JSON.parse(c.ukuran).map(x => x.l + ' | ' + x.k).join('\n');
+  const c = A.d.cfg, z = JSON.parse(c.ukuran).map(x => x.l + ' | ' + x.k).join('\n'), tz = JSON.parse(c.tabel_ukuran || '[]').map(x => [x.l, x.ld, x.pj, x.pjt].join(' | ')).join('\n');
   $('#a-cfg').innerHTML = `<h2>Pengaturan Portal</h2><form id="cf"><div class="two"><div class="card"><h3>Status & Aksesibilitas Portal</h3>
   <label class="ck"><input type="checkbox" name="manual" ${c.portal_manual === 'BUKA' ? 'checked' : ''}> Portal dibuka (sakelar manual)</label>
   <label>Batas waktu otomatis (WIB)<input type="datetime-local" name="batas" value="${esc(c.batas)}"></label><small>Portal tertutup bila salah satu: sakelar mati ATAU melewati batas waktu.</small>
   <label>Pesan saat portal ditutup<textarea name="pesan_tutup" rows="3">${esc(c.pesan_tutup)}</textarea></label></div>
   <div class="card"><h3>Ukuran Toga & Panduan</h3><label>Daftar ukuran (satu per baris: LABEL | keterangan)<textarea name="ukuran" rows="8">${esc(z)}</textarea></label>
-  <label>Gambar panduan ukuran (URL gambar atau ID file Google Drive yang dibagikan "Siapa saja dengan link")<input name="gambar" value="${esc(c.gambar)}"></label></div></div>
+  <label>Tabel ukuran untuk info (satu per baris: UKURAN | LD | PJ | PJT)<textarea name="tabel_ukuran" rows="5">${esc(tz)}</textarea></label><small>Hanya ditampilkan sebagai informasi. Pilihan di form mahasiswa memakai daftar di atas.</small>
+  <label>Gambar panduan ukuran (tempel link Google Drive biasa atau ID file; file harus dibagikan "Siapa saja yang memiliki link")<input name="gambar" value="${esc(c.gambar)}"></label></div></div>
   <div class="card"><h3>Informasi Publik (Beranda)</h3><label>Tahun akademik<input name="tahun" value="${esc(c.tahun)}"></label>
   <label>Informasi tanggal wisuda<textarea name="wisuda_info" rows="3">${esc(c.wisuda_info)}</textarea></label><label>Informasi gladi & pengambilan toga<textarea name="gladi_info" rows="3">${esc(c.gladi_info)}</textarea></label>
   <label>Informasi pembayaran wisuda<textarea name="bayar_info" rows="3">${esc(c.bayar_info)}</textarea></label><label>No. WhatsApp panitia (mis. 0812…)<input name="hotline_wa" inputmode="numeric" value="${esc(c.hotline_wa)}"></label></div>
@@ -231,7 +236,8 @@ async function csave(e) {
   const o = Object.fromEntries(new FormData($('#cf')));
   const z = o.ukuran.split('\n').map(x => x.trim()).filter(Boolean).map(x => { const [l, ...k] = x.split('|'); return { l: l.trim(), k: k.join('|').trim() }; });
   if (!z.length) return toast('Daftar ukuran tidak boleh kosong', 1);
-  const cfg = { tahun: o.tahun, wisuda_info: o.wisuda_info, gladi_info: o.gladi_info, bayar_info: o.bayar_info, hotline_wa: o.hotline_wa, gambar: o.gambar.trim(), pesan_tutup: o.pesan_tutup, batas: o.batas, portal_manual: o.manual ? 'BUKA' : 'TUTUP', ukuran: JSON.stringify(z) };
+  const tb = (o.tabel_ukuran || '').split('\n').map(x => x.trim()).filter(Boolean).map(x => { const [l, ld, pj, pjt] = x.split('|').map(y => y.trim()); return { l, ld, pj, pjt }; }).filter(r => r.l);
+  const cfg = { tabel_ukuran: JSON.stringify(tb), tahun: o.tahun, wisuda_info: o.wisuda_info, gladi_info: o.gladi_info, bayar_info: o.bayar_info, hotline_wa: o.hotline_wa, gambar: o.gambar.trim(), pesan_tutup: o.pesan_tutup, batas: o.batas, portal_manual: o.manual ? 'BUKA' : 'TUTUP', ukuran: JSON.stringify(z) };
   const old = { ...A.d.cfg }; Object.assign(A.d.cfg, cfg); toast('Menyimpan pengaturan…');
   const r = await api('adminSaveSettings', { cfg }); if (r.auth) return alogout(true);
   if (r.success) { S.pub = r.pub; jset('tc_pub', r.pub); jset('tc_ad', A.d, sessionStorage); renderHome(); renderDash(); toast('Pengaturan tersimpan ✔ (langsung aktif di portal)'); }

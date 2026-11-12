@@ -13,7 +13,7 @@ h1{font-size:22px;margin:.4em 0}h2{font-size:19px;margin:.2em 0}h3{font-size:16p
 input,select,textarea{width:100%;font:inherit;padding:10px 12px;border:1.5px solid var(--bd);border-radius:10px;background:#f8faff;margin-top:4px}
 input:focus,select:focus,textarea:focus{outline:0;border-color:var(--b);background:#fff}
 label{display:block;font-weight:600;font-size:14px;margin:10px 0}.ck{display:flex;gap:10px;align-items:flex-start;font-weight:400}.ck input{width:20px;margin:2px 0}
-.sz{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.chips{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px}
+.sz{display:grid;grid-template-columns:repeat(auto-fit,minmax(68px,1fr));gap:8px}.chips{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px}
 .chip{border:1.5px solid var(--bd);border-radius:12px;padding:10px 4px;text-align:center;background:#f8faff;cursor:pointer;margin:0;font-weight:400}
 .chip b{display:block;font-size:17px}.chip input{display:none}.chip small{font-size:11px}
 .chip:has(input:checked){background:var(--b);color:#fff;border-color:var(--b)}.chip:has(input:checked) small{color:#dbe6ff}
@@ -42,3 +42,4 @@ label{display:block;font-weight:600;font-size:14px;margin:10px 0}.ck{display:fle
 .sv{position:fixed;left:0;right:0;bottom:0;background:#1e2340;color:#fff;padding:10px 14px;display:flex;gap:8px;align-items:center;justify-content:space-between;z-index:9}.sv .btn{margin:0;width:auto}
 .two{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}.two .card{margin:0}
 @media(min-width:700px){body:not(.adm){background:linear-gradient(#e8efff,#f4f6ff)}}
+table.uk{text-align:center;margin:8px 0 4px}table.uk th,table.uk td{text-align:center;font-size:14px}table.uk th{background:var(--bl);color:var(--b)}details summary{cursor:pointer;font-weight:600;margin:8px 0}
